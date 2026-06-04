@@ -3,4 +3,4 @@ spring:
     name: backend
 
   profiles:
-    active: local
+    active: docker

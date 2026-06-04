@@ -4,9 +4,9 @@ WORKDIR /app
 
 COPY . .
 
-RUN chmod +x mvnw
+RUN chmod +x gradlew
 
-RUN ./mvnw clean package -DskipTests
+RUN ./gradlew build -x test
 
 EXPOSE 8080
 
