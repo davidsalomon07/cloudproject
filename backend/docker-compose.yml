@@ -7,10 +7,7 @@ services:
     environment:
       POSTGRES_DB: monitoring
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin
-
-    ports:
-      - "5432:5432"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
 
   backend:
     build: .
@@ -21,6 +18,11 @@ services:
 
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+      API_KEY: ${API_KEY:-changeme-in-production}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5173}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
 
     depends_on:
       - postgres

@@ -2,14 +2,21 @@ spring:
   datasource:
     url: jdbc:postgresql://postgres:5432/monitoring
     username: postgres
-    password: admin
+    password: ${POSTGRES_PASSWORD:admin}
 
   jpa:
     hibernate:
       ddl-auto: update
 
-    show-sql: true
+    show-sql: false
 
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
+
+app:
+  api-key: ${API_KEY:changeme-in-production}
+
+telegram:
+  bot-token: ${TELEGRAM_BOT_TOKEN:}
+  chat-id: ${TELEGRAM_CHAT_ID:}

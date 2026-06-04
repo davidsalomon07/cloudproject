@@ -11,17 +11,17 @@ class ServerHistory(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
 
+    @Column(name = "server_id", nullable = false)
+    var serverId: Long,
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    var status: ServerStatus,
+    var previousStatus: ServerStatus,
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    var newStatus: ServerStatus,
 
     @Column(nullable = false)
-    var responseTime: Long,
-
-    @Column(nullable = false)
-    var timestamp: LocalDateTime = LocalDateTime.now(),
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "server_id", nullable = false)
-    var server: Server
+    var timestamp: LocalDateTime = LocalDateTime.now()
 )

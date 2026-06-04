@@ -4,6 +4,7 @@ import com.monitoring.backend.dto.CreateServerRequest
 import com.monitoring.backend.dto.ServerResponse
 import com.monitoring.backend.dto.UpdateServerRequest
 import com.monitoring.backend.services.ServerService
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -26,7 +27,7 @@ class ServerController(
 
     @PostMapping
     fun createServer(
-        @RequestBody request: CreateServerRequest
+        @Valid @RequestBody request: CreateServerRequest
     ): ServerResponse {
         return serverService.createServer(request)
     }
@@ -34,7 +35,7 @@ class ServerController(
     @PutMapping("/{id}")
     fun updateServer(
         @PathVariable id: Long,
-        @RequestBody request: UpdateServerRequest
+        @Valid @RequestBody request: UpdateServerRequest
     ): ServerResponse {
         return serverService.updateServer(id, request)
     }
@@ -45,5 +46,4 @@ class ServerController(
     ) {
         serverService.deleteServer(id)
     }
-
 }
