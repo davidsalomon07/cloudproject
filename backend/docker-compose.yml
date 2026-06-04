@@ -1,0 +1,27 @@
+services:
+
+  postgres:
+    image: postgres:17
+    container_name: monitoring-db
+
+    environment:
+      POSTGRES_DB: monitoring
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: .
+
+    container_name: monitoring-backend
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+    depends_on:
+      - postgres
