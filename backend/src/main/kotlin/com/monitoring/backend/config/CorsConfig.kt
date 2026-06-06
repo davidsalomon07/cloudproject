@@ -11,12 +11,18 @@ class CorsConfig(
     @Value("\${app.frontend-origin:http://localhost:5173}") private val frontendOrigin: String
 ) {
 
+    private val allowedOrigins: Array<String> = frontendOrigin
+        .split(",")
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .toTypedArray()
+
     @Bean
     fun corsConfigurer(): WebMvcConfigurer {
         return object : WebMvcConfigurer {
             override fun addCorsMappings(registry: CorsRegistry) {
                 registry.addMapping("/api/**")
-                    .allowedOrigins(frontendOrigin)
+                    .allowedOrigins(*allowedOrigins)
                     .allowedMethods("GET", "POST", "PUT", "DELETE")
                     .allowedHeaders("Content-Type", "X-API-Key")
             }

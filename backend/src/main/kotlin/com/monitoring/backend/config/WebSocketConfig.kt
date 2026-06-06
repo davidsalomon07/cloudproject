@@ -13,6 +13,12 @@ class WebSocketConfig(
     @Value("\${app.frontend-origin:http://localhost:5173}") private val frontendOrigin: String
 ) : WebSocketMessageBrokerConfigurer {
 
+    private val allowedOrigins: Array<String> = frontendOrigin
+        .split(",")
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .toTypedArray()
+
     override fun configureMessageBroker(registry: MessageBrokerRegistry) {
         registry.enableSimpleBroker("/topic")
         registry.setApplicationDestinationPrefixes("/app")
@@ -20,7 +26,7 @@ class WebSocketConfig(
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         registry.addEndpoint("/ws")
-            .setAllowedOrigins(frontendOrigin)
+            .setAllowedOrigins(*allowedOrigins)
             .withSockJS()
     }
 }
