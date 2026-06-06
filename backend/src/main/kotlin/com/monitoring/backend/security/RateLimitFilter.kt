@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @Component
 @Order(0)
@@ -18,6 +20,12 @@ class RateLimitFilter(
 ) : OncePerRequestFilter() {
 
     private val requestCounts = ConcurrentHashMap<String, MutableList<Instant>>()
+
+    init {
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate({
+            cleanupStaleEntries()
+        }, windowSeconds, windowSeconds, TimeUnit.SECONDS)
+    }
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         if (!request.servletPath.startsWith("/api/")) {
@@ -47,7 +55,20 @@ class RateLimitFilter(
             timestamps.add(now)
         }
 
+        response.addHeader("X-RateLimit-Limit", maxRequests.toString())
+        response.addHeader("X-RateLimit-Remaining", (maxRequests - timestamps.size).toString())
+
         filterChain.doFilter(request, response)
+    }
+
+    private fun cleanupStaleEntries() {
+        val cutoff = Instant.now().minusSeconds(windowSeconds)
+        requestCounts.entries.removeIf { (_, timestamps) ->
+            synchronized(timestamps) {
+                timestamps.removeIf { it.isBefore(cutoff) }
+                timestamps.isEmpty()
+            }
+        }
     }
 
     private fun resolveClientKey(request: HttpServletRequest): String {
@@ -55,10 +76,14 @@ class RateLimitFilter(
         if (!forwardedFor.isNullOrBlank()) {
             return forwardedFor.split(",").first().trim()
         }
+        val realIp = request.getHeader("X-Real-IP")
+        if (!realIp.isNullOrBlank()) {
+            return realIp.trim()
+        }
         return request.remoteAddr ?: "unknown"
     }
 
     companion object {
-        private val WRITE_METHODS = setOf("POST", "PUT", "DELETE")
+        private val WRITE_METHODS = setOf("POST", "PUT", "DELETE", "PATCH")
     }
 }

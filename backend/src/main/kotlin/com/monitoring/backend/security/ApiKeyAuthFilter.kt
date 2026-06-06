@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
+import java.security.MessageDigest
 
 @Component
 @Order(1)
@@ -29,7 +30,12 @@ class ApiKeyAuthFilter(
         }
 
         val providedKey = request.getHeader("X-API-Key")
-        if (providedKey != configuredApiKey) {
+        if (providedKey == null ||
+            !MessageDigest.isEqual(
+                providedKey.toByteArray(),
+                configuredApiKey.toByteArray()
+            )
+        ) {
             response.status = HttpServletResponse.SC_UNAUTHORIZED
             response.contentType = "application/json"
             response.writer.write("""{"error":"API key inválida o ausente"}""")
