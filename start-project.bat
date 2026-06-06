@@ -1,57 +1,62 @@
 @echo off
-REM Script para ejecutar el proyecto completo - Cloud Monitoring System
+REM MicroCheck - Levantamiento del entorno completo con Docker Compose
 REM Batch - Windows
 
 color 0B
 cls
 echo ======================================
-echo Cloud Monitoring System - Startup
+echo MicroCheck - Docker Compose Startup
 echo ======================================
 echo.
 
-REM Verificar Java
-echo Verificando Java...
-java -version >nul 2>&1
+echo Verificando Docker...
+docker --version >nul 2>&1
 if errorlevel 1 (
-    echo X Java 21+ no esta instalado
-    echo Descargalo aqui: https://www.oracle.com/java/technologies/downloads/#java21
+    echo X Docker no esta instalado o no esta en el PATH.
+    echo Instala Docker Desktop: https://www.docker.com/products/docker-desktop/
     pause
     exit /b 1
 )
-for /f tokens^=2 "delims= " %%i in ('java -version 2^>^&1') do (
-    echo Java encontrado: %%i
-    goto :check_node
-)
 
-:check_node
-REM Verificar Node.js
-echo Verificando Node.js...
-node --version >nul 2>&1
+docker info >nul 2>&1
 if errorlevel 1 (
-    echo X Node.js no esta instalado
-    echo Descargalo aqui: https://nodejs.org/
+    echo X Docker Desktop no esta en ejecucion. Inicialo y vuelve a intentar.
     pause
     exit /b 1
 )
-for /f tokens^=1 "delims= " %%i in ('node --version 2^>^&1') do (
-    echo Node.js encontrado: %%i
-)
+echo Docker listo.
 
-echo.
-echo Iniciando servicios...
-echo.
-
-REM Obtener el directorio del proyecto
 set PROJECT_ROOT=%~dp0
+cd /d %PROJECT_ROOT%
 
-REM Iniciar Frontend en ventana separada
-echo Iniciando Frontend (http://localhost:5173)...
-start cmd /k "cd /d %PROJECT_ROOT%frontend && npm run dev"
+if not exist ".env" (
+    echo X No se encontro el archivo .env en la raiz del proyecto.
+    pause
+    exit /b 1
+)
 
-REM Esperar un poco
-timeout /t 3 /nobreak
+echo.
+echo Levantando stack (postgres + backend + frontend)...
+docker compose up --build -d
+if errorlevel 1 (
+    echo X Error al levantar los contenedores.
+    pause
+    exit /b 1
+)
 
-REM Iniciar Backend
-echo Iniciando Backend (http://localhost:8080)...
-cd /d %PROJECT_ROOT%backend
-call gradlew.bat bootRun
+echo.
+echo Estado de los servicios:
+docker compose ps
+
+echo.
+echo ======================================
+echo Entorno listo
+echo ======================================
+echo Frontend:  http://localhost:80
+echo API:       http://localhost:8080
+echo API Key:   configurar changeme en el engranaje de la UI
+echo.
+echo Detener:   docker compose down
+echo Reinicio:  docker compose down -v ^&^& docker compose up --build -d
+echo.
+pause

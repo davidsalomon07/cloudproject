@@ -1,60 +1,59 @@
-# Script para ejecutar el proyecto completo - Cloud Monitoring System
+# MicroCheck - Levantamiento del entorno completo con Docker Compose
 # PowerShell - Windows
 
 Write-Host "======================================" -ForegroundColor Cyan
-Write-Host "Cloud Monitoring System - Startup" -ForegroundColor Cyan
+Write-Host "MicroCheck - Docker Compose Startup" -ForegroundColor Cyan
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Función para verificar si un comando existe
 function Test-CommandExists {
     param($command)
     $null = Get-Command $command -ErrorAction SilentlyContinue
     return $?
 }
 
-# 1. Verificar Java 21+
-Write-Host "✓ Verificando Java..." -ForegroundColor Yellow
-if (Test-CommandExists java) {
-    $javaVersion = java -version 2>&1
-    Write-Host "Java encontrado: $javaVersion" -ForegroundColor Green
-} else {
-    Write-Host "✗ Java 21+ no está instalado" -ForegroundColor Red
-    Write-Host "Descárgalo aquí: https://www.oracle.com/java/technologies/downloads/#java21" -ForegroundColor Yellow
-    exit
+Write-Host "Verificando Docker..." -ForegroundColor Yellow
+if (-not (Test-CommandExists docker)) {
+    Write-Host "Docker no esta instalado o no esta en el PATH." -ForegroundColor Red
+    Write-Host "Instala Docker Desktop: https://www.docker.com/products/docker-desktop/" -ForegroundColor Yellow
+    exit 1
 }
 
-# 2. Verificar Node.js
-Write-Host "✓ Verificando Node.js..." -ForegroundColor Yellow
-if (Test-CommandExists node) {
-    $nodeVersion = node --version
-    Write-Host "Node.js encontrado: $nodeVersion" -ForegroundColor Green
-} else {
-    Write-Host "✗ Node.js no está instalado" -ForegroundColor Red
-    Write-Host "Descárgalo aquí: https://nodejs.org/" -ForegroundColor Yellow
-    exit
+docker info 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Docker Desktop no esta en ejecucion. Inicialo y vuelve a intentar." -ForegroundColor Red
+    exit 1
 }
+Write-Host "Docker listo." -ForegroundColor Green
 
-Write-Host ""
-Write-Host "Iniciando servicios..." -ForegroundColor Cyan
-Write-Host ""
-
-# 3. Cambiar al directorio del proyecto
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $projectRoot
 
-# 4. Iniciar Frontend en terminal separada
-Write-Host "📱 Iniciando Frontend (http://localhost:5173)..." -ForegroundColor Green
-$frontendPath = Join-Path $projectRoot "frontend"
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$frontendPath'; npm run dev"
+if (-not (Test-Path ".env")) {
+    Write-Host "No se encontro el archivo .env en la raiz del proyecto." -ForegroundColor Red
+    exit 1
+}
 
-# Esperar un poco para que el frontend inicie
-Start-Sleep -Seconds 3
+Write-Host ""
+Write-Host "Levantando stack (postgres + backend + frontend)..." -ForegroundColor Cyan
+docker compose up --build -d
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Error al levantar los contenedores." -ForegroundColor Red
+    exit 1
+}
 
-# 5. Iniciar Backend
-Write-Host "🔧 Iniciando Backend (http://localhost:8080)..." -ForegroundColor Green
-$backendPath = Join-Path $projectRoot "backend"
-cd $backendPath
-.\gradlew bootRun
+Write-Host ""
+Write-Host "Estado de los servicios:" -ForegroundColor Cyan
+docker compose ps
 
-# El Backend correrá en el terminal actual
+Write-Host ""
+Write-Host "======================================" -ForegroundColor Green
+Write-Host "Entorno listo" -ForegroundColor Green
+Write-Host "======================================" -ForegroundColor Green
+Write-Host "Frontend:  http://localhost:80"
+Write-Host "API:       http://localhost:8080"
+Write-Host "API Key:   configurar 'changeme' en el engranaje de la UI"
+Write-Host ""
+Write-Host "Detener:   docker compose down"
+Write-Host "Reinicio:  docker compose down -v && docker compose up --build -d"
+Write-Host ""
