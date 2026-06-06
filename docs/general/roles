@@ -1,0 +1,31 @@
+Hoja de Ruta para los Grupos 
+ 
+Asignar Roles Corporativos (Obligatorio firmar en su hoja de grupo): AA
+Ingeniero DevOps/Infraestructura(Josue Cruz): Responsable del archivo `docker-compose.yml`, redes virtuales y variables de entorno.  
+Administrador de Bases de Datos (DBA)(Leonardo 
+Falconi): Diseña las tablas (máximo 1 o 2 tablas sencillas) y las credenciales. * 
+Ingenieros Backend(Santiago Vallejo, David Salomon): Desarrolla los endpoints simples (API en Python, Node, etc.). * 
+Ingeniero Frontend(Sebastián Rojas): Diseña la interfaz web interactiva.  
+Ingeniero QA y seguridad(Diego Banda): Blinda el programa contra vulneraciones. 
+ 
+Definición del Producto Mínimo Viable (PMV) 
+Nombre del Proyecto: MicroCheck - Sistema de 
+Monitoreo de Servidores y Alertas 
+Descripción General: Una mini plataforma web diseñada para simular y visualizar el estado de salud (Online/Offline) de diferentes servicios o páginas web, generando alertas visuales e integrando. 
+Arquitectura y Justificación  
+Para demostrar un dominio completo de la 
+infraestructura sin complicar el código, el PMV se divide en tres pilares estratégicos: 
+1.	Orquestación Completa (Multi-contenedor con Docker) 
+El proyecto es de naturaleza de infraestructura, lo que lo hace ideal para demostrar el uso de Docker Compose separando las responsabilidades en contenedores independientes y de lógica simple: 
+    Frontend (El "Espejo"): Una interfaz web básica (HTML/TS simple) que consume la API del backend y muestra un panel gráfico con luces verdes (Online) o rojas (Offline). 
+    Backend (El "Vigilante"): Un script corto (en Python o 
+Node.js) que realiza chequeos concurrentes (peticiones HTTP o Ping) a una lista de URLs predefinidas cada cierto tiempo. 
+    Base de Datos (El "Historial"): Una base de datos ligera (como PostgreSQL) que solo almacena dos cosas: la URL del servidor y la hora exacta en la que se cayó. 
+2.	Diagnóstico de Conectividad (Redes en Docker) 
+Este proyecto "mata dos pájaros de un tiro". El diagnóstico de conectividad no es un añadido, es la aplicación misma. 
+    Para lucirse con el profesor, el contenedor del Backend utilizará herramientas nativas del sistema operativo (como ping o curl) ejecutadas desde dentro del contenedor para verificar si hay salida a internet o comunicación entre los mismos contenedores de la red interna de Docker. 
+3.	Gestión de Credenciales y Seguridad 
+Para demostrar buenas prácticas de DevOps en la protección de datos sensibles, el sistema incluirá una alerta externa (por ejemplo, un bot de Telegram o Discord que avise cuando un servidor cambie a estado Offline). 
+    Las credenciales de la base de datos y el Token secreto del Bot de mensajería jamás estarán expuestos en el código fuente. Se gestionarán estrictamente a través de variables de entorno ocultas (.env) inyectadas directamente por Docker al momento de levantar los contenedores. 
+ 
+ 
