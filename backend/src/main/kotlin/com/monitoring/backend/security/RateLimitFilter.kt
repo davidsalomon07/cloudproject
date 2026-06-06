@@ -3,6 +3,7 @@ package com.monitoring.backend.security
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
@@ -19,6 +20,7 @@ class RateLimitFilter(
     @Value("\${app.rate-limit.window-seconds:60}") private val windowSeconds: Long
 ) : OncePerRequestFilter() {
 
+    private val logger = LoggerFactory.getLogger(RateLimitFilter::class.java)
     private val requestCounts = ConcurrentHashMap<String, MutableList<Instant>>()
 
     init {
@@ -28,10 +30,7 @@ class RateLimitFilter(
     }
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
-        if (!request.servletPath.startsWith("/api/")) {
-            return true
-        }
-        return request.method !in WRITE_METHODS
+        return !request.servletPath.startsWith("/api/")
     }
 
     override fun doFilterInternal(
@@ -47,6 +46,7 @@ class RateLimitFilter(
         synchronized(timestamps) {
             timestamps.removeIf { it.isBefore(windowStart) }
             if (timestamps.size >= maxRequests) {
+                logger.warn("Rate limit excedido para IP: $clientKey en path: ${request.servletPath}")
                 response.status = 429
                 response.contentType = "application/json"
                 response.writer.write("""{"error":"Demasiadas solicitudes, intente más tarde"}""")
@@ -81,9 +81,5 @@ class RateLimitFilter(
             return realIp.trim()
         }
         return request.remoteAddr ?: "unknown"
-    }
-
-    companion object {
-        private val WRITE_METHODS = setOf("POST", "PUT", "DELETE", "PATCH")
     }
 }
